@@ -51,30 +51,78 @@ include_once('core/process/data.loader.php');
 			<div class="collapse navbar-collapse" id="menu">
 				
 				<ul class="nav navbar-nav navbar-right">
-					<!--
-					<li>
-						<a href="/pokestops" title="Brusselople LiveMap">
-							<i class="fa fa-play" aria-hidden="true"></i> LiveMap
-						</a>
-					</li>
-					-->
-					<li>
-						<a href="pokemon" title="<?= $config->infos->site_name ?> Pokédex" class="menu-label"><i class="fa fa-map-marker" aria-hidden="true"></i> <?= $locales->NAV_POKEDEX->$lang ?></a>
-					</li>
-					<li>
-						<a href="gym" title="Brusselopole Gyms" class="menu-label"><i class="fa fa-bolt" aria-hidden="true"></i> <?= $locales->GYMS->$lang ?></a>
-					</li>
-					<li>
-						<a href="pokestops" title="Brusselopole Pokéstops" class="menu-label"><i class="fa fa-medkit" aria-hidden="true"></i> Pokéstops</a>
-					</li>
-					<li>
-						<a href="<?= $config->urls->fb_url ?>" title="Join us on Facebook" target="_blank" class="menu-label"><i class="fa fa-facebook-square" aria-hidden="true"></i>
- Facebook</a>
-					</li>
-					<li>
-						<a href="<?= $config->urls->tw_url ?>" title="Join us on Twitter" target="_blank" class="menu-label"><i class="fa fa-twitter" aria-hidden="true"></i>
- Twitter</a>
-					</li>
+					
+					<?php
+					
+					
+					if(!isset($config->menu)){
+						
+						echo "Please update variables.json file with menu values";
+						exit(); 
+						
+					}
+					
+					
+					foreach($config->menu as $menu){
+						
+						if(isset($menu->locale)){
+						
+							$locale = $menu->locale; 
+							$text 	=  $locales->$locale->$lang;
+						
+						}else{
+						
+							$text 	= $menu->text; 
+						
+						}
+						
+						
+						switch($menu->type){
+							
+							case 'link':
+							
+							?>
+							
+							<li>
+								<a href="<?= $menu->href ?>" class="menu-label"><i class="fa <?= $menu->icon ?>" aria-hidden="true"></i> <?= $text ?></a>
+							</li>
+							
+							<?php
+							
+							break;
+							
+							case 'link_external':
+							
+							?>
+							
+							<li>
+								<a href="<?= $menu->href ?>" class="menu-label"><i class="fa <?= $menu->icon ?>" aria-hidden="true"></i> <?= $menu->text ?></a>
+							</li>
+							
+							<?php
+							
+							break; 
+							
+							case 'html':
+							
+							?>
+							
+							<li> <?= $menu->value ?> </li>
+							
+							<?php
+								
+								break; 
+							
+							
+							
+						}
+						
+						
+						
+					}
+						
+					?>
+					
 				</ul>
 				
 			</div><!-- /.navbar-collapse -->
@@ -181,14 +229,18 @@ include_once('core/process/data.loader.php');
 			<script defer src="https://maps.googleapis.com/maps/api/js?key=<?= $config->system->GMaps_Key ?>&libraries=visualization&callback=initMap"></script> 		
 			<script src="core/js/pokemon.maps.js.php?id=<?= $pokemon_id ?>"></script>
 		    
-		    <?php break; 
+		    <?php ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			    
+			break; 
 		    
 		    case 'pokestops': ?>
 		    
 		    <script defer src="https://maps.googleapis.com/maps/api/js?key=<?= $config->system->GMaps_Key ?>&libraries=visualization&callback=initMap"></script> 
 			<script src="core/js/pokestops.maps.js"></script>
 		    
-		    <?php break;
+		    <?php ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			    
+			break;
 		    
 		    case 'gym': ?>
 		    
@@ -211,7 +263,9 @@ include_once('core/process/data.loader.php');
 					    	
 		    </script>
 		    
-			<?php break;
+			<?php ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				
+			break;
 				
 			case 'pokedex': ?>
 			
@@ -235,7 +289,19 @@ include_once('core/process/data.loader.php');
 			</script>
 			
 			
-			<?php break;
+			<?php ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				
+			break;
+			
+			case 'dashboard': ?>
+			
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.2.1/Chart.min.js"></script>
+			<script src="core/js/dashboard.graph.js.php"></script>	
+
+			
+			<?php ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			
+			break; 
 		    
 	    }
 	}

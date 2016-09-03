@@ -15,8 +15,6 @@ date_default_timezone_set($config->system->timezone);
 // Manage Time Interval
 // #####################
 
-
-
 $time_interval  = strlen($config->system->time_inverval); 
 
 if($time_interval > 3){
@@ -27,7 +25,8 @@ if($time_interval > 3){
 
 $time			= new stdClass();
 $time->symbol 	= substr($config->system->time_inverval, 0,1);
-$time->delay 	= substr($config->system->time_inverval, 1,1);
+$time_delay 	= str_replace($time->symbol, '', $config->system->time_inverval); 
+$time->delay 	= $time_delay;
 
 if($time->symbol == '+'){
 	$time->symbol_reverse = '-';
@@ -266,7 +265,10 @@ if(!empty($page)){
 			
 			if($pokemon->total_spawn > 0){
 			
-				$req 		= "SELECT COUNT(*) as total, (disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR) as disappear_time  FROM pokemon WHERE pokemon_id = '".$pokemon_id."' GROUP BY DAY(disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR)";
+				$req 		= "SELECT COUNT(*) as total, DATE(disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR) as disappear_time
+				FROM pokemon WHERE pokemon_id = '".$pokemon_id."' 
+				GROUP BY DATE(disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR) ";
+				
 				$result 	= $mysqli->query($req);
 				
 				$pokemon->total_days 	= $result->num_rows;
@@ -281,7 +283,12 @@ if(!empty($page)){
 						
 			// Last seen 
 			
-			$req 		= "SELECT (disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR) as disappear_time, latitude, longitude FROM pokemon WHERE pokemon_id = '".$pokemon_id."' AND disappear_time < (NOW() ".$time->symbol_reverse." INTERVAL ".$time->delay." HOUR) ORDER BY disappear_time DESC LIMIT 0,1";
+			$req 		= "SELECT (disappear_time ".$time->symbol." INTERVAL ".$time->delay." HOUR) as disappear_time, latitude, longitude 
+			FROM pokemon 
+			WHERE pokemon_id = '".$pokemon_id."' 
+			AND disappear_time < (NOW() ".$time->symbol_reverse." INTERVAL ".$time->delay." HOUR) 
+			ORDER BY disappear_time DESC 
+			LIMIT 0,1";
 			$result 	= $mysqli->query($req);
 			$data 		= $result->fetch_object();
 						
@@ -345,6 +352,14 @@ if(!empty($page)){
 			$max 		= $config->system->max_pokemon; 
 			$pokedex 	= new stdClass();
 			
+			$req 		= "SELECT COUNT(*) as total,pokemon_id FROM pokemon GROUP by pokemon_id ";
+                        $result 	= $mysqli->query($req);
+	                $data_array = array();
+	                
+	                while($data = $result->fetch_object()){
+	                  $data_array[$data->pokemon_id] = $data->total;
+	                };
+	                
 			for( $i= 1 ; $i <= $max ; $i++ ){
 				
 				$pokedex->$i				= new stdClass();
@@ -352,12 +367,7 @@ if(!empty($page)){
 				$pokedex->$i->permalink 	= 'pokemon/'.$i; 
 				$pokedex->$i->img			= 'core/pokemons/'.$i.'.png'; 
 				$pokedex->$i->name			= $pokemons->$i->name; 
-				
-				$req 		= "SELECT COUNT(*) as total FROM pokemon WHERE pokemon_id = '".$i."'";
-				$result 	= $mysqli->query($req);
-				$data 		= $result->fetch_object();
-				
-				$pokedex->$i->spawn			= $data->total; 
+				$pokedex->$i->spawn = isset($data_array[$i])? $data_array[$i] : 0;
 							
 			}
 					
@@ -482,6 +492,44 @@ if(!empty($page)){
 					
 		break;
 		
+		
+		case 'dashboard':
+		
+			// This case is only used for test purpose. 
+			
+			$stats_file	= SYS_PATH.'/core/json/gym.stats.json';
+
+			if(!is_file($stats_file)){
+				
+				echo "Sorry, no Gym stats file were found <br> Have you enable cron? ";
+				exit(); 
+				
+			}
+			
+			
+			$stats_file	= SYS_PATH.'/core/json/pokemon.stats.json';
+
+			if(!is_file($stats_file)){
+				
+				echo "Sorry, no Pokémon stats file were found  <br> Have you enable cron?";
+				exit(); 
+				
+			}
+			
+			
+			$stats_file	= SYS_PATH.'/core/json/pokestop.stats.json';
+
+			if(!is_file($stats_file)){
+				
+				echo "Sorry, no Pokéstop stats file were found  <br> Have you enable cron?";
+				exit(); 
+				
+			}
+
+			
+		
+		break;
+		
 	}
 	
 }
@@ -502,7 +550,7 @@ else{
 	$req 		= "SELECT COUNT(*) as total FROM pokemon WHERE disappear_time > (NOW() ".$time->symbol_reverse." INTERVAL ".$time->delay." HOUR);";	
 	$result 	= $mysqli->query($req);
 	$data 		= $result->fetch_object();
-	
+
 	
 	$home->pokemon_now 	= $data->total;
 	 	
